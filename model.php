@@ -1,7 +1,7 @@
 <?php
 config_init();
 $config = array();
-$config['appId'] = 'YOUR APP ID';
+$config['appId'] = '315305861908015';
 $config['secret'] = 'YOUR APP SECRET';
 $config['fileUpload'] = false; // optional
 $facebook = new Facebook($config);
@@ -83,7 +83,7 @@ function select_err_msg($cord, $src, $dest){
 function list_friends(){
 	$param = array(
 		'scope' => 'user_about_me,friends_about_me,user_relationships,friends_relationships,friends_birthday,publish_stream',
-		'redirect_uri' => 'http://cent8ev-anf-app000.c4sa.net/index.php'
+		'redirect_uri' => 'http://cclu2l6-aay-app000.c4sa.net/index.php'
 	);
 	if($GLOBALS['uid']){
 		try {
