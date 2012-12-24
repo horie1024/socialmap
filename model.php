@@ -80,6 +80,38 @@ function select_err_msg($cord, $src, $dest){
 	//
 }
 
+function set_data () {
+	$param = array(
+		'scope' => 'publish_stream, friends_checkins, friends_status',
+		'redirect_uri' => 'http://cclu2l6-aay-app000.c4sa.net/index.php'
+	);
+	if($GLOBALS['uid']){
+		try {
+			//友達一覧取得
+			$user_friends = $GLOBALS['facebook']->api('/me/friends', 'GET');
+			//友達のチェックインデータの処理
+			
+			//var_dump($user_friends);
+            //$num = 1;
+            require 'templates/list.php';
+
+		} catch(FacebookApiException $e){
+       		login_to_fb($param);
+	        error_log($e->getType());
+        	error_log($e->getMessage());
+   		}   
+   	} else {
+      	login_to_fb($param);
+    }
+}
+
+function get_data ($user_id, $lat1, $lon1, $lat2, $lon2, $limit = null)) {
+	$sql = 'SELECT user_id, lat, lon FROM place_data WHERE (lat BETWEEN '. $lat1 .' and ' . $lat2 . ') AND (lon BETWEEN ' . $lon1 . ' and ' . $lon2 . ') LIMIT 0, 30';	
+	$exec = $GLOBALS['db']->query($sql);
+	$result = $exec->fetch(PDO::FETCH_ASSOC);
+	return $result;
+}
+
 function list_friends(){
 	$param = array(
 		'scope' => 'user_about_me,friends_about_me,user_relationships,friends_relationships,friends_birthday,publish_stream',
