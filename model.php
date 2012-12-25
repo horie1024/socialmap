@@ -1,16 +1,14 @@
 <?php
 config_init();
+connect_database();
 $config = array();
 $config['appId'] = '315305861908015';
-$config['secret'] = 'YOUR APP SECRET';
+$config['secret'] = '10a1372511de89d8c349de28ee1b801f';
 $config['fileUpload'] = false; // optional
 $facebook = new Facebook($config);
 $db;
 
 $uid = $facebook->getUser();
-//コントローラ式に変更（あとで）
-//$src_id = !is_null($_GET['src_id']) ? $_GET['src_id'] : NULL;
-//$dest_id = !is_null($_GET['dest_id']) ? $_GET['dest_id'] : NULL;
 
 function config_init(){
 	mb_language("uni");
@@ -35,95 +33,43 @@ function connect_database(){
 	}
 }
 
-function get_fb_user_info($fbid){
-	return $GLOBALS['facebook']->api("/${fbid}", 'GET');
-}
-
-function http_to_friends($src_id, $dest_id){
-	if (!is_null($dest_id) && !is_null($src_id)){
-		connect_database();
-		$src = get_fb_user_info($src_id);
-		$dest = get_fb_user_info($dest_id);
-		$installed = $GLOBALS['facebook']->api("/${dest_id}?fields=installed", 'GET');
-		if ($dest['relationship_status'] == 'In a relationship' && $src['relationship_status'] == 'Single'){
-			select_err_msg(404,$src, $dest);
-		}
-		else if ($dest['relationship_status'] == 'Married' && $src['relationship_status'] == 'Single'){
-			//echo '401error<br>';
-			select_err_msg(401, $src, $dest);
-		}
-		else if ($installed['installed'] == 'true'){
-			//echo '200<br>';
-			select_err_msg(200, $src, $dest);
-		}
-		else if ($src_id == $dest_id){
-			select_err_msg(500, $src, $dest);
-		}
-		else if ($dest['first_name'] == $src['first_name']){
-			select_err_msg(501, $src, $dest);
-		}
-		else {
-			//echo '403error<br>';
-			select_err_msg(403, $src, $dest);
-		}
-	}
-	else {
-		echo '接続先の友人が指定されていません';
-	}
-}
-
-function select_err_msg($cord, $src, $dest){
-	$sql = 'SELECT * FROM err_msg WHERE cord = '.$cord;
-	$exec = $GLOBALS['db']->query($sql);
-	$result = $exec->fetch(PDO::FETCH_ASSOC);
-	require 'templates/result.php';
-	//
-}
-
-function set_data () {
-	$param = array(
-		'scope' => 'publish_stream, friends_checkins, friends_status',
-		'redirect_uri' => 'http://cclu2l6-aay-app000.c4sa.net/index.php'
-	);
-	if($GLOBALS['uid']){
-		try {
-			//友達一覧取得
-			$user_friends = $GLOBALS['facebook']->api('/me/friends', 'GET');
-			//友達のチェックインデータの処理
-			
-			//var_dump($user_friends);
-            //$num = 1;
-            require 'templates/list.php';
-
-		} catch(FacebookApiException $e){
-       		login_to_fb($param);
-	        error_log($e->getType());
-        	error_log($e->getMessage());
-   		}   
-   	} else {
-      	login_to_fb($param);
-    }
-}
-
-function get_data ($user_id, $lat1, $lon1, $lat2, $lon2, $limit = null)) {
-	$sql = 'SELECT user_id, lat, lon FROM place_data WHERE (lat BETWEEN '. $lat1 .' and ' . $lat2 . ') AND (lon BETWEEN ' . $lon1 . ' and ' . $lon2 . ') LIMIT 0, 30';	
-	$exec = $GLOBALS['db']->query($sql);
-	$result = $exec->fetch(PDO::FETCH_ASSOC);
+function get_data ($user_id, $lat1, $lon1, $lat2, $lon2,$limit) {
+  try{
+	$sql = 'SELECT * FROM place_data WHERE (lat BETWEEN "'. $lat1 .'" and "' . $lat2 . '") AND (lon BETWEEN "' . $lon1 . '" and "' . $lon2 . '") LIMIT 0, ' . $limit;
+    $exec = $GLOBALS['db']->query($sql);
+    $result = array();
+	while ($result[] = $exec->fetch(PDO::FETCH_ASSOC));
+    }catch (PDOExeption $e){
+    echo $e;
+  }
 	return $result;
+}
+
+function get_place_data ($place_id) {
+  try {
+    $sql = 'SELECT * FROM place_data WHERE place_id=' . $place_id;
+    $exec = $GLOBALS['db']->query($sql);
+    $result = array();
+	while ($result[] = $exec->fetch(PDO::FETCH_ASSOC));
+  } catch (PDOExeption $e) {
+    echo $e;
+  }
+  return $result;
 }
 
 function list_friends(){
 	$param = array(
-		'scope' => 'user_about_me,friends_about_me,user_relationships,friends_relationships,friends_birthday,publish_stream',
+		'scope' => 'user_about_me,friends_about_me,user_relationships,friends_relationships,friends_birthday,publish_stream,user_status,friends_status,user_checkins,friends_checkins',
 		'redirect_uri' => 'http://cclu2l6-aay-app000.c4sa.net/index.php'
 	);
 	if($GLOBALS['uid']){
 		try {
 			//友達一覧取得
+            $access_token = $GLOBALS['facebook']->getAccessToken();
+            echo $access_token;
+          	return false;
 			$user_friends = $GLOBALS['facebook']->api('/me/friends', 'GET');
 			//友達一覧表示処理
-			//var_dump($user_friends);
-            //$num = 1;
             require 'templates/list.php';
 
 		} catch(FacebookApiException $e){
